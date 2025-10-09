@@ -2,130 +2,149 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Kids Learning Launchpad</title>
   <style>
     :root {
-      --bg: #0f172a; /* slate-900 */
-      --panel: #111827ee; /* gray-900 */
-      --tile: #1f2937; /* gray-800 */
-      --tile-hover: #374151; /* gray-700 */
-      --accent: #22c55e; /* green-500 */
-      --accent2: #60a5fa; /* blue-400 */
-      --text: #f8fafc; /* slate-50 */
-      --muted: #cbd5e1; /* slate-300 */
+      --bg:#0f172a; --panel:#111827ee; --tile:#1f2937; --tile-hover:#374151;
+      --accent:#22c55e; --accent2:#60a5fa; --text:#f8fafc; --muted:#cbd5e1; --warn:#ef4444;
     }
-    html, body {
-      margin: 0; padding: 0; background: var(--bg); color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-    }
-    .container { max-width: 980px; margin: 0 auto; padding: 16px; }
-    header { text-align: center; padding: 8px 0 16px; }
-    h1 { font-size: 1.6rem; margin: 8px 0; }
-    p.subtitle { color: var(--muted); margin: 0; font-size: 0.95rem; }
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Noto Sans,Ubuntu,Cantarell,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";}
+    .container{max-width:980px;margin:0 auto;padding:16px;}
+    header{text-align:center;padding:8px 0 16px;}
+    h1{font-size:1.6rem;margin:8px 0;}
+    p.subtitle{color:var(--muted);margin:0;font-size:0.95rem;}
 
-    .panel { background: var(--panel); border: 1px solid #1f2937; border-radius: 16px; padding: 16px; margin: 16px 0; }
-    .section-title { display: flex; align-items: center; gap: 10px; font-size: 1.2rem; margin: 4px 0 12px; }
+    .panel{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px;margin:16px 0;}
+    .section-title{display:flex;align-items:center;gap:10px;font-size:1.2rem;margin:4px 0 12px;}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+    @media (min-width:720px){.grid{grid-template-columns:repeat(3,1fr);}}
+    .tile{display:block;background:var(--tile);border-radius:14px;padding:14px;text-decoration:none;color:var(--text);border:1px solid #263042;}
+    .tile:hover,.tile:focus{background:var(--tile-hover);outline:2px solid #334155;}
+    .tile .row{display:flex;align-items:center;gap:12px;}
+    .emoji{font-size:1.6rem;}
+    .label{font-weight:600;font-size:1.05rem;}
+    .desc{color:var(--muted);font-size:0.9rem;margin-top:4px;}
+    .note{font-size:0.85rem;color:var(--muted);margin-top:8px;}
+    .inline-tip{font-size:0.85rem;color:var(--muted);margin:4px 0 0 2px;}
+    .row.split{display:flex;gap:12px;flex-wrap:wrap;}
+    .half{flex:1 1 280px;}
+    .footer{text-align:center;color:var(--muted);font-size:0.85rem;margin:16px 0 28px;}
+    .pill{display:inline-block;background:#0b1220;border:1px solid #1f2a3b;color:var(--muted);padding:6px 10px;border-radius:999px;margin:2px;}
 
-    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    @media (min-width: 720px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+    /* Toast */
+    .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
+      background:#0b1220;border:1px solid #1f2a3b;color:var(--text);padding:10px 14px;border-radius:12px;
+      box-shadow:0 6px 20px #00000055;opacity:0;pointer-events:none;transition:opacity .25s;}
+    .toast.show{opacity:1;}
 
-    .tile { display: block; background: var(--tile); border-radius: 14px; padding: 14px; text-decoration: none; color: var(--text); border: 1px solid #263042; }
-    .tile:hover, .tile:focus { background: var(--tile-hover); outline: 2px solid #334155; }
-    .tile .row { display: flex; align-items: center; gap: 12px; }
-    .emoji { font-size: 1.6rem; }
-    .label { font-weight: 600; font-size: 1.05rem; }
-    .desc { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
+    /* Progress row (Mon-Fri) */
+    .progress-row{display:flex;gap:6px;margin-top:8px;}
+    .dot{width:12px;height:12px;border-radius:50%;background:#1f2a3b;border:1px solid #2a3a52;}
+    .dot.filled{background:var(--accent);border-color:#1a9b48;}
 
-    .note { font-size: 0.85rem; color: var(--muted); margin-top: 8px; }
-
-    .streak {
-      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: center; margin-top: 10px;
-    }
-    .streak .value { text-align: center; font-size: 1.3rem; font-weight: 700; background: #0b1220; border: 1px solid #1f2a3b; padding: 10px; border-radius: 10px; }
-    .streak button { background: var(--accent); color: #06280f; border: none; border-radius: 10px; padding: 10px; font-weight: 700; font-size: 1rem; }
-    .streak button.minus { background: #ef4444; color: #2a0a0a; }
-
-    .inline-tip { font-size: 0.85rem; color: var(--muted); margin: 4px 0 0 2px; }
-
-    .row.split { display: flex; gap: 12px; flex-wrap: wrap; }
-    .half { flex: 1 1 280px; }
-
-    .footer { text-align: center; color: var(--muted); font-size: 0.85rem; margin: 16px 0 28px; }
-    .pill { display: inline-block; background: #0b1220; border: 1px solid #1f2a3b; color: var(--muted); padding: 6px 10px; border-radius: 999px; margin: 2px; }
+    /* Buttons */
+    .btn{display:inline-block;background:var(--accent2);color:#07182f;border:none;padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer}
+    .btn.alt{background:#0b1220;color:var(--muted);border:1px solid #1f2a3b;}
+    .btn.warn{background:var(--warn);color:#2a0a0a;}
+    .streak{display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:8px;align-items:center;margin-top:10px;}
+    .streak .value{text-align:center;font-size:1.3rem;font-weight:700;background:#0b1220;border:1px solid #1f2a3b;padding:10px;border-radius:10px;user-select:none;}
+    .streak button{background:var(--accent);color:#06280f;border:none;border-radius:10px;padding:10px;font-weight:700;font-size:1rem;cursor:pointer;}
+    .streak button.minus{background:#ef4444;color:#2a0a0a;}
+    .tiny{font-size:.8rem;color:var(--muted)}
+    .small-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+    code.kbd{background:#0b1220;border:1px solid #1f2a3b;border-radius:6px;padding:2px 6px;font-size:.85rem;color:var(--muted)}
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <h1>Kids Learning Launchpad</h1>
-      <p class="subtitle">Tap a tile to start a short learning "episode". Best used in the Silk browser on Fire tablets.</p>
+      <p class="subtitle">Tap a tile to start a short learning “episode”. Stars award automatically when you return or tap “Done”.</p>
     </header>
 
+    <!-- P2 SECTION -->
     <div class="panel">
       <div class="section-title">👦 P2 (Age 5–6) — Superhero & Maths</div>
       <div class="grid">
-        <a class="tile" href="https://www.bbc.co.uk/bitesize/subjects/zhy7dp3" target="_blank" rel="noopener noreferrer">
-          <div class="row"><span class="emoji">🐱🥋</span><span class="label">BBC Bitesize — KS1 Maths</span></div>
+        <a class="tile trackable" data-child="p2" data-tile="bitesize_ks1"
+           href="https://www.bbc.co.uk/bitesize/subjects/zhy7dp3" target="_blank" rel="noopener noreferrer">
+          <div class="row"><span class="emoji">🐱🪙</span><span class="label">BBC Bitesize — KS1 Maths</span></div>
           <div class="desc">Short videos & quizzes. Try Karate Cats Maths and number bonds.</div>
         </a>
-        <a class="tile" href="https://studio.code.org/courses/coursea-2025/units/1" target="_blank" rel="noopener noreferrer">
+        <a class="tile trackable" data-child="p2" data-tile="codeorg_courseA"
+           href="https://studio.code.org/courses/coursea-2025/units/1" target="_blank" rel="noopener noreferrer">
           <div class="row"><span class="emoji">🧩💡</span><span class="label">Code.org — Course A</span></div>
-          <div class="desc">Tap‑and‑drag puzzles that teach logic and sequencing. 1–2 levels per session.</div>
+          <div class="desc">Tap-and-drag puzzles teaching logic and sequencing.</div>
         </a>
-        <a class="tile" href="https://code.org/en-US/students" target="_blank" rel="noopener noreferrer">
+        <a class="tile trackable" data-child="p2" data-tile="codeorg_labs"
+           href="https://code.org/en-US/students" target="_blank" rel="noopener noreferrer">
           <div class="row"><span class="emoji">🎮🕹️</span><span class="label">Code.org — Games & Labs</span></div>
-          <div class="desc">Explore Sprite Lab / Artist for creative coding between puzzle days.</div>
+          <div class="desc">Explore Sprite Lab / Artist for creative coding.</div>
         </a>
         <div class="tile" role="button" tabindex="0" aria-label="Open Khan Academy Kids app">
-          <div class="row"><span class="emoji">📱🐨</span><span class="label">Khan Academy Kids (App)</span></div>
+          <div class="row"><span class="emoji">📱🦖</span><span class="label">Khan Academy Kids (App)</span></div>
           <div class="desc">Open the app from your home screen: 2–3 math missions.</div>
         </div>
         <div class="tile" role="button" tabindex="0" aria-label="Open ScratchJr app">
-          <div class="row"><span class="emoji">🦸‍♂️🎬</span><span class="label">ScratchJr (App)</span></div>
+          <div class="row"><span class="emoji">🧑‍🚀🎬</span><span class="label">ScratchJr (App)</span></div>
           <div class="desc">Make a superhero fly and rescue a cat. Add a chase when tapped.</div>
         </div>
-        <a class="tile" href="https://www.bbc.co.uk/bitesize" target="_blank" rel="noopener noreferrer">
+        <a class="tile trackable" data-child="p2" data-tile="bitesize_home"
+           href="https://www.bbc.co.uk/bitesize" target="_blank" rel="noopener noreferrer">
           <div class="row"><span class="emoji">🧠📚</span><span class="label">BBC Bitesize — Home</span></div>
           <div class="desc">If a link breaks, start here then tap KS1 → Maths.</div>
         </a>
       </div>
-      <div class="note">Tip: Bookmark these pages in Silk and move this Launchpad bookmark to the home screen for one‑tap access.</div>
-
+      <div class="small-row">
+        <div class="pill">Superhero prompts</div>
+        <div class="inline-tip">• Fly across the city • Add a villain on tap • Make 3 scenes: city → cave → lab</div>
+      </div>
       <div class="row split" style="margin-top:12px;">
-        <div class="half">
-          <div class="pill">Superhero prompts</div>
-          <div class="inline-tip">• Make a hero fly across the city and rescue a cat • Add a villain that moves on tap • Build 3 scenes: city → cave → lab</div>
-        </div>
         <div class="half">
           <div class="pill">P2 Streak</div>
           <div class="streak" data-key="streak_p2">
             <button class="minus" aria-label="decrease">−</button>
-            <div class="value" aria-live="polite">0</div>
+            <div class="value" aria-live="polite" title="Long-press 1.5s to add/remove manually">0</div>
             <button class="plus" aria-label="increase">+</button>
           </div>
-          <div class="inline-tip">Each completed tile = 1 star. 5 stars = pick Friday’s theme.</div>
+          <div class="progress-row" data-progress="p2"></div>
+          <div class="tiny">Daily cap: 2 stars. Time‑away threshold: 8 min. Cooldown per tile: 30 min.</div>
+        </div>
+        <div class="half">
+          <div class="pill">Make “Done” Button</div>
+          <div class="inline-tip">Create a bookmarklet kids can tap on any site to mark completion.</div>
+          <div class="small-row">
+            <button class="btn" data-make-done="p2">Generate for P2</button>
+            <button class="btn alt" data-copy-url>Copy Launchpad URL</button>
+          </div>
+          <div class="tiny">How to use: in Silk, add a bookmark, edit its URL to the generated “javascript:” code.</div>
         </div>
       </div>
     </div>
 
+    <!-- PRE-P1 SECTION -->
     <div class="panel">
       <div class="section-title">👧 Pre‑P1 (Age 4–5) — Disney, Singing & Drawing</div>
       <div class="grid">
-        <a class="tile" href="https://www.starfall.com/h/abcs/" target="_blank" rel="noopener noreferrer">
-          <div class="row"><span class="emoji">🔤🎵</span><span class="label">Starfall — ABCs</span></div>
+        <a class="tile trackable" data-child="pq" data-tile="starfall_abcs"
+           href="https://www.starfall.com/h/abcs/" target="_blank" rel="noopener noreferrer">
+          <div class="row"><span class="emoji">🔥🎵</span><span class="label">Starfall — ABCs</span></div>
           <div class="desc">Gentle phonics songs and letter activities. 1–2 letters per session.</div>
         </a>
-        <a class="tile" href="https://www.starfall.com/h/" target="_blank" rel="noopener noreferrer">
+        <a class="tile trackable" data-child="pq" data-tile="starfall_home"
+           href="https://www.starfall.com/h/" target="_blank" rel="noopener noreferrer">
           <div class="row"><span class="emoji">⭐📖</span><span class="label">Starfall — Home</span></div>
           <div class="desc">Free stories, numbers, and songs. Explore the free Pre‑K items.</div>
         </a>
-        <a class="tile" href="https://www.bbc.co.uk/bitesize" target="_blank" rel="noopener noreferrer">
+        <a class="tile trackable" data-child="pq" data-tile="bitesize_ey_home"
+           href="https://www.bbc.co.uk/bitesize" target="_blank" rel="noopener noreferrer">
           <div class="row"><span class="emoji">🎨🎶</span><span class="label">BBC Bitesize — Early Years</span></div>
-          <div class="desc">From the homepage, tap Early years → music/phonics short clips.</div>
+          <div class="desc">From the homepage, tap Early years → music/phonics clips.</div>
         </a>
         <div class="tile" role="button" tabindex="0" aria-label="Open Khan Academy Kids app">
-          <div class="row"><span class="emoji">📱🧸</span><span class="label">Khan Academy Kids (App)</span></div>
+          <div class="row"><span class="emoji">📱🖍️</span><span class="label">Khan Academy Kids (App)</span></div>
           <div class="desc">Open the app: do 2 Pre‑K missions and 1 song.</div>
         </div>
         <div class="tile" role="button" tabindex="0" aria-label="Open ScratchJr app">
@@ -133,30 +152,39 @@
           <div class="desc">Make a stage and have two characters dance when tapped.</div>
         </div>
       </div>
-
+      <div class="small-row">
+        <div class="pill">Creative prompts</div>
+        <div class="inline-tip">• Draw a castle + fireworks • Clap the beat to your name • Pick 1 animal and say 1 fact</div>
+      </div>
       <div class="row split" style="margin-top:12px;">
-        <div class="half">
-          <div class="pill">Creative prompts</div>
-          <div class="inline-tip">• Draw a castle and add fireworks • Clap the beat to your name • Pick 1 animal and say 1 fact</div>
-        </div>
         <div class="half">
           <div class="pill">Pre‑P1 Streak</div>
           <div class="streak" data-key="streak_pq">
             <button class="minus" aria-label="decrease">−</button>
-            <div class="value" aria-live="polite">0</div>
+            <div class="value" aria-live="polite" title="Long-press 1.5s to add/remove manually">0</div>
             <button class="plus" aria-label="increase">+</button>
           </div>
-          <div class="inline-tip">Two tiles per day is perfect (about 20–25 minutes).</div>
+          <div class="progress-row" data-progress="pq"></div>
+          <div class="tiny">Daily cap: 2 stars. Time‑away threshold: 8 min. Cooldown per tile: 30 min.</div>
+        </div>
+        <div class="half">
+          <div class="pill">Make “Done” Button</div>
+          <div class="inline-tip">Create a bookmarklet for explicit completion from any site.</div>
+          <div class="small-row">
+            <button class="btn" data-make-done="pq">Generate for Pre‑P1</button>
+            <button class="btn alt" data-copy-url>Copy Launchpad URL</button>
+          </div>
+          <div class="tiny">Add to Silk as a bookmark with the generated javascript: URL.</div>
         </div>
       </div>
     </div>
 
     <div class="panel">
       <div class="section-title">🛠️ Quick Setup Tips</div>
-      <ul class="note" style="margin: 0 0 0 18px;">
-        <li>Long‑press this page’s bookmark in Silk → Add to home screen (for one‑tap access).</li>
-        <li>Put the Khan Kids and ScratchJr app icons in the same Home folder as this Launchpad.</li>
-        <li>Use Fire parental controls to allow Silk + these apps during learning time.</li>
+      <ul class="note" style="margin:0 0 0 18px;">
+        <li>In Silk: bookmark this page → Add to home screen. Place next to Khan Kids & ScratchJr apps.</li>
+        <li>Daily cap = 2 stars. Encourage 2 tiles/day: one skill, one creative.</li>
+        <li>Use the “Done” bookmark if you want explicit completion credit without waiting.</li>
       </ul>
     </div>
 
@@ -170,30 +198,255 @@
     </div>
   </div>
 
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
   <script>
-    // Minimal localStorage-backed streak counters per child
-    function initStreak(el) {
-      const key = el.getAttribute('data-key');
-      const valueEl = el.querySelector('.value');
-      const minus = el.querySelector('.minus');
-      const plus = el.querySelector('.plus');
-      const clamp = (n) => Math.max(0, Math.min(999, n|0));
-      const load = () => clamp(parseInt(localStorage.getItem(key) || '0', 10));
-      const save = (n) => localStorage.setItem(key, String(clamp(n)));
-      const update = () => { valueEl.textContent = load(); };
-      minus.addEventListener('click', () => { save(load() - 1); update(); });
-      plus.addEventListener('click', () => { save(load() + 1); update(); });
-      // Keyboard accessibility (Enter/Space)
-      el.parentElement.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          plus.click();
-        }
-      });
-      update();
+    // ===== CONFIG =====
+    const CONFIG = {
+      DAILY_CAP: 2,                // max stars per child per day
+      TIME_AWAY_MINUTES: 8,        // Level 2 threshold
+      TILE_COOLDOWN_MINUTES: 30,   // prevent repeat credit too quickly
+      PROGRESS_DAYS: 5             // dots shown (Mon–Fri)
+    };
+
+    // ===== UTILITIES =====
+    const $ = (s, r=document)=>r.querySelector(s);
+    const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
+    const todayKey = () => new Date().toISOString().slice(0,10);
+    const storage = {
+      get: (k,d=null)=>JSON.parse(localStorage.getItem(k) ?? JSON.stringify(d)),
+      set: (k,v)=>localStorage.setItem(k, JSON.stringify(v))
+    };
+    const toast = (msg, ms=1800) => {
+      const t = $$('#toast'); t.textContent = msg; t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'), ms);
+    };
+
+    // Track last click-out per child
+    const LAST_CLICK_KEY = 'last_click';
+    const STREAK_KEYS = { p2: 'streak_p2', pq: 'streak_pq' };
+    const DAYCOUNT_KEYS = { p2: 'daycount_p2', pq: 'daycount_pq' };
+    const PROGRESS_KEYS = { p2: 'progress_p2', pq: 'progress_pq' };
+
+    function getDayCount(child, day=todayKey()) {
+      const m = storage.get(DAYCOUNT_KEYS[child], {});
+      return m[day] || 0;
+    }
+    function incDayCount(child, day=todayKey()) {
+      const m = storage.get(DAYCOUNT_KEYS[child], {});
+      m[day] = (m[day] || 0) + 1;
+      storage.set(DAYCOUNT_KEYS[child], m);
+      return m[day];
+    }
+    function getStreak(child) {
+      return parseInt(localStorage.getItem(STREAK_KEYS[child] ?? 0)) || 0;
+    }
+    function setStreak(child, n) {
+      localStorage.setItem(STREAK_KEYS[child], String(Math.max(0, Math.min(999, n))));
+    }
+    function addStar(child) {
+      if (getDayCount(child) >= CONFIG.DAILY_CAP) {
+        toast('Daily stars reached for today'); return false;
+      }
+      setStreak(child, getStreak(child) + 1);
+      incDayCount(child);
+      updateUI();
+      toast('⭐ Nice work! Star earned');
+      return true;
     }
 
-    document.querySelectorAll('.streak').forEach(initStreak);
+    function recordClickOut(child, tileId) {
+      const last = storage.get(LAST_CLICK_KEY, {});
+      last[child] = { tileId, t: Date.now() };
+      storage.set(LAST_CLICK_KEY, last);
+    }
+
+    function tileEligible(child, tileId) {
+      const key = `cool_$${child}_$${tileId}`;
+      const last = storage.get(key, 0);
+      const coolMs = CONFIG.TILE_COOLDOWN_MINUTES * 60 * 1000;
+      return Date.now() - last >= coolMs;
+    }
+    function markTileCredited(child, tileId) {
+      const key = `cool_$${child}_$${tileId}`;
+      storage.set(key, Date.now());
+    }
+
+    function handleReturnFocus() {
+      const last = storage.get(LAST_CLICK_KEY, {});
+      const entries = Object.entries(last);
+      if (!entries.length) return;
+      // For each child with a last click, check duration away and credit if eligible
+      entries.forEach(([child, info]) => {
+        if (!info || !info.t || !info.tileId) return;
+        const awayMs = Date.now() - info.t;
+        const threshold = CONFIG.TIME_AWAY_MINUTES * 60 * 1000;
+        if (awayMs >= threshold) {
+          if (!tileEligible(child, info.tileId)) {
+            // cooldown active
+            return;
+          }
+          if (getDayCount(child) < CONFIG.DAILY_CAP) {
+            addStar(child);
+            markTileCredited(child, info.tileId);
+          }
+        }
+        // Clear the last click record regardless to avoid double-count logic
+        const all = storage.get(LAST_CLICK_KEY, {});
+        delete all[child];
+        storage.set(LAST_CLICK_KEY, all);
+      });
+    }
+
+    // Progress dots (Mon–Fri style; we just show “today’s count” as filled dots)
+    function renderProgress(child) {
+      const row = document.querySelector(`.progress-row[data-progress="$${child}"]`);
+      if (!row) return;
+      row.innerHTML = '';
+      const n = Math.min(CONFIG.PROGRESS_DAYS, getDayCount(child)); // fill up to today’s earned stars (bounded)
+      // Draw CONFIG.PROGRESS_DAYS dots, fill `n` of them
+      for (let i=0;i<CONFIG.PROGRESS_DAYS;i++){
+        const d = document.createElement('div');
+        d.className = 'dot' + (i < n ? ' filled' : '');
+        row.appendChild(d);
+      }
+    }
+
+    function updateUI() {
+      // Update streak numbers
+      $$('.streak').forEach(s=>{
+        const key = s.getAttribute('data-key');
+        const v = s.querySelector('.value');
+        const child = key.endsWith('p2') ? 'p2' : 'pq';
+        v.textContent = getStreak(child);
+        renderProgress(child);
+      });
+    }
+
+    // Manual controls and long-press override
+    function initStreakControls() {
+      $$('.streak').forEach(s=>{
+        const key = s.getAttribute('data-key');
+        const child = key.endsWith('p2') ? 'p2' : 'pq';
+        const val = s.querySelector('.value');
+        const minus = s.querySelector('.minus');
+        const plus = s.querySelector('.plus');
+
+        minus.addEventListener('click', ()=>{
+          setStreak(child, Math.max(0, getStreak(child) - 1));
+          updateUI();
+        });
+        plus.addEventListener('click', ()=>{
+          addStar(child);
+        });
+
+        // Long-press to toggle manual +/- without caps (parent override)
+        let pressTimer=null;
+        val.addEventListener('mousedown', ()=>{
+          pressTimer = setTimeout(()=>{
+            const choice = prompt('Parent override: type + or - to adjust streak');
+            if (choice === '+') setStreak(child, getStreak(child)+1);
+            else if (choice === '-') setStreak(child, Math.max(0, getStreak(child)-1));
+            updateUI();
+          }, 1500);
+        });
+        ['mouseup','mouseleave','touchend','touchcancel'].forEach(evt=>{
+          val.addEventListener(evt, ()=>{ if (pressTimer) clearTimeout(pressTimer); });
+        });
+        val.addEventListener('touchstart', ()=>{
+          pressTimer = setTimeout(()=>{
+            const choice = prompt('Parent override: type + or - to adjust streak');
+            if (choice === '+') setStreak(child, getStreak(child)+1);
+            else if (choice === '-') setStreak(child, Math.max(0, getStreak(child)-1));
+            updateUI();
+          }, 1500);
+        });
+      });
+    }
+
+    // Trackable tiles: Levels 1 & 2
+    function initTrackableTiles() {
+      $$('.trackable').forEach(a=>{
+        a.addEventListener('click', ()=>{
+          const child = a.getAttribute('data-child');
+          const tile = a.getAttribute('data-tile');
+          // Level 1: record click-out
+          recordClickOut(child, tile);
+          // Optionally grant immediate “launch” bonus in future; not enabled now
+        });
+      });
+    }
+
+    // Level 3: “Done” bookmarklet integration
+    // We support hash fragments like #done=child:tileId
+    function checkDoneHash() {
+      const h = (location.hash || '').slice(1); // remove #
+      if (!h.startsWith('done=')) return;
+      try {
+        const payload = decodeURIComponent(h.split('=')[1]); // child:tileId or just child
+        const [child, tileId='manual'] = payload.split(':');
+        if (child !== 'p2' && child !== 'pq') return;
+        if (getDayCount(child) >= CONFIG.DAILY_CAP) {
+          toast('Daily stars reached for today'); return;
+        }
+        // Respect cooldown if a tileId was provided
+        if (tileId && tileId !== 'manual' && !tileEligible(child, tileId)) {
+          toast('Cooldown active for this activity'); 
+          return;
+        }
+        addStar(child);
+        if (tileId && tileId !== 'manual') {
+          markTileCredited(child, tileId);
+        }
+      } finally {
+        // Clean hash so refreshes don’t double count
+        history.replaceState(null, '', location.pathname + location.search);
+      }
+    }
+
+    // Generate bookmarklet code for a child
+    function makeDoneBookmarklet(child) {
+      // This bookmarklet navigates to this Launchpad URL with a #done=child
+      const base = location.origin + location.pathname + location.search;
+      const target = `$${base}#done=$${encodeURIComponent(child)}`;
+      const js = `javascript:(function(){location.href='${target}';})();`;
+      return js;
+    }
+
+    function copyToClipboard(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      toast('Copied to clipboard');
+    }
+
+    function initDoneButtons() {
+      $$('[data-make-done]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const child = btn.getAttribute('data-make-done'); // 'p2' or 'pq'
+          const code = makeDoneBookmarklet(child);
+          // Show instructions & copy the code
+          const ok = confirm('Bookmarklet code generated. Press OK to copy. Then: In Silk → Bookmarks → Add bookmark → Edit URL → paste this code.');
+          if (ok) copyToClipboard(code);
+        });
+      });
+      $$('[data-copy-url]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const url = location.origin + location.pathname + location.search;
+          copyToClipboard(url);
+        });
+      });
+    }
+
+    // Init
+    window.addEventListener('focus', handleReturnFocus);
+    window.addEventListener('DOMContentLoaded', ()=>{
+      initTrackableTiles();
+      initStreakControls();
+      initDoneButtons();
+      updateUI();
+      checkDoneHash();
+    });
   </script>
 </body>
 </html>
