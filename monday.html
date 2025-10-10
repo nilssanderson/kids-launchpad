@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Monday — Kids Learning Launchpad</title>
+  <style>
+    :root {
+      --bg:#0f172a; --panel:#111827ee; --tile:#1f2937; --tile-hover:#374151;
+      --accent:#22c55e; --accent2:#60a5fa; --text:#f8fafc; --muted:#cbd5e1; --warn:#ef4444;
+    }
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Noto Sans,Ubuntu,Cantarell,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";}
+    .container{max-width:980px;margin:0 auto;padding:16px;}
+    header{text-align:center;padding:8px 0 8px;}
+    h1{font-size:1.6rem;margin:8px 0;}
+    p.subtitle{color:var(--muted);margin:4px 0 0;font-size:0.95rem;}
+
+    .panel{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px;margin:16px 0;}
+    .section-title{display:flex;align-items:center;gap:10px;font-size:1.2rem;margin:4px 0 12px;}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+    @media (min-width:720px){.grid{grid-template-columns:repeat(3,1fr);}}
+    .tile{display:block;background:var(--tile);border-radius:14px;padding:14px;text-decoration:none;color:var(--text);border:1px solid #263042;}
+    .tile:hover,.tile:focus{background:var(--tile-hover);outline:2px solid #334155;}
+    .tile .row{display:flex;align-items:center;gap:12px;}
+    .emoji{font-size:1.6rem;}
+    .label{font-weight:600;font-size:1.05rem;}
+    .desc{color:var(--muted);font-size:0.9rem;margin-top:4px;}
+    .note{font-size:0.85rem;color:var(--muted);margin-top:8px;}
+    .inline-tip{font-size:0.85rem;color:var(--muted);margin:4px 0 0 2px;}
+    .row.split{display:flex;gap:12px;flex-wrap:wrap;}
+    .half{flex:1 1 280px;}
+    .footer{text-align:center;color:var(--muted);font-size:0.85rem;margin:16px 0 28px;}
+    .pill{display:inline-block;background:#0b1220;border:1px solid #1f2a3b;color:var(--muted);padding:6px 10px;border-radius:999px;margin:2px;}
+
+    /* Toast */
+    .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
+      background:#0b1220;border:1px solid #1f2a3b;color:var(--text);padding:10px 14px;border-radius:12px;
+      box-shadow:0 6px 20px #00000055;opacity:0;pointer-events:none;transition:opacity .25s;z-index:1000;}
+    .toast.show{opacity:1;}
+
+    /* Progress dots */
+    .progress-row{display:flex;gap:6px;margin-top:8px;}
+    .dot{width:12px;height:12px;border-radius:50%;background:#1f2a3b;border:1px solid #2a3a52;}
+    .dot.filled{background:var(--accent);border-color:#1a9b48;}
+
+    /* Buttons + streak */
+    .btn{display:inline-block;background:var(--accent2);color:#07182f;border:none;padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer}
+    .btn.alt{background:#0b1220;color:var(--muted);border:1px solid #1f2a3b;}
+    .btn.warn{background:var(--warn);color:#2a0a0a;}
+    .streak{display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:8px;align-items:center;margin-top:10px;}
+    .streak .value{text-align:center;font-size:1.3rem;font-weight:700;background:#0b1220;border:1px solid #1f2a3b;padding:10px;border-radius:10px;user-select:none;}
+    .streak button{background:var(--accent);color:#06280f;border:none;border-radius:10px;padding:10px;font-weight:700;font-size:1rem;cursor:pointer;}
+    .streak button.minus{background:#ef4444;color:#2a0a0a;}
+    .tiny{font-size:.8rem;color:var(--muted)}
+    .small-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+    code.kbd{background:#0b1220;border:1px solid #1f2a3b;border-radius:6px;padding:2px 6px;font-size:.85rem;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Monday — Kids Learning Launchpad</h1>
+      <p class="subtitle">Direct-to-activity links. Stars award automatically when you return or tap “Done”.</p>
+    </header>
+
+    <!-- P2 MONDAY -->
+    <div class="panel">
+      <div class="section-title">👦 P2 (Age 5–6) — Monday</div>
+      <div class="grid">
+        <!-- BBC Bitesize Karate Cats Maths (direct game page) -->
+        <a class="tile trackable" data-child="p2" data-tile="karate_cats_maths"
+           href="https://www.bbc.co.uk/bitesize/articles/zf4sscw" target="_blank" rel="noopener noreferrer">
+          <div class="row"><span class="emoji">🐱🥋</span><span class="label">Karate Cats — Maths</span></div>
+          <div class="desc">Jump into KS1 maths challenges and collect belts. Try a dojo run.</div>
+        </a>
+
+        <!-- BBC Bitesize Space Shoppers (money funfair) -->
+        <a class="tile trackable" data-child="p2" data-tile="space_shoppers_money"
+           href="https://www.bbc.co.uk/bitesize/articles/zvfcp9q" target="_blank" rel="noopener noreferrer">
+          <div class="row"><span class="emoji">🛰️🎡</span><span class="label">Space Shoppers — Money Funfair</span></div>
+          <div class="desc">Practise coins, totals, and giving change at the funfair stalls.</div>
+        </a>
+
+        <!-- Code.org Course A Unit 1 (direct curriculum unit) -->
+        <a class="tile trackable" data-child="p2" data-tile="codeorg_courseA_u1"
+           href="https://studio.code.org/courses/coursea-2025/units/1" target="_blank" rel="noopener noreferrer">
+          <div class="row"><span class="emoji">🧩💡</span><span class="label">Code.org — Course A, Unit 1</span></div>
+          <div class="desc">Do 1–2 puzzle levels. Drag-and-drop logic for beginners.</div>
+        </a>
+      </div>
+
+      <div class="row split" style="margin-top:12px;">
+        <div class="half">
+          <div class="pill">P2 Streak (Mon)</div>
+          <div class="streak" data-key="streak_p2">
+            <button class="minus" aria-label="decrease">−</button>
+            <div class="value" aria-live="polite" title="Long-press 1.5s to add/remove manually">0</div>
+            <button class="plus" aria-label="increase">+</button>
+          </div>
+          <div class="progress-row" data-progress="p2"></div>
+          <div class="tiny">Daily cap: 2 stars · Time‑away: 8 min · Cooldown: 30 min.</div>
+        </div>
+        <div class="half">
+          <div class="pill">“Done” Button</div>
+          <div class="inline-tip">Generate a bookmarklet kids can tap on any site to mark completion.</div>
+          <div class="small-row">
+            <button class="btn" data-make-done="p2">Generate for P2</button>
+            <button class="btn alt" data-copy-url>Copy Monday URL</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRE-P1 MONDAY -->
+    <div class="panel">
+      <div class="section-title">👧 Pre‑P1 (Age 4–5) — Monday</div>
+      <div class="grid">
+        <!-- Bud’s Number Garden (EYFS counting) -->
+        <a class="tile trackable" data-child="pq" data-tile="buds_number_garden"
+           href="https://www.bbc.co.uk/bitesize/topics/zjkphbk/articles/zd4b382" target="_blank" rel="noopener noreferrer">
+          <div class="row"><span class="emoji">🐝🌼</span><span class="label">Bud’s Number Garden</span></div>
+          <div class="desc">Early years counting & sequencing with Bud the bee.</div>
+        </a>
+
+        <!-- Starfall ABCs (direct ABCs page) -->
+        <a class="tile trackable" data-child="pq" data-tile="starfall_abcs"
+           href="https://www.starfall.com/h/abcs/" target="_blank" rel="noopener noreferrer">
+          <div class="row"><span class="emoji">🔤🎵</span><span class="label">Starfall — ABCs</span></div>
+          <div class="desc">Tap letters, sing along, do 1–2 letters.</div>
+        </a>
+
+        <!-- Optional: Starfall Home hub (backup) -->
+        <a class="tile trackable" data-child="pq" data-tile="starfall_home"
+           href="https://www.starfall.com/h/" target="_blank" rel="noopener noreferrer">
+          <div class="row"><span class="emoji">⭐🏠</span><span class="label">Starfall — Home</span></div>
+          <div class="desc">If ABCs is busy, use this hub to jump into free Pre‑K items.</div>
+        </a>
+      </div>
+
+      <div class="row split" style="margin-top:12px;">
+        <div class="half">
+          <div class="pill">Pre‑P1 Streak (Mon)</div>
+          <div class="streak" data-key="streak_pq">
+            <button class="minus" aria-label="decrease">−</button>
+            <div class="value" aria-live="polite" title="Long-press 1.5s to add/remove manually">0</div>
+            <button class="plus" aria-label="increase">+</button>
+          </div>
+          <div class="progress-row" data-progress="pq"></div>
+          <div class="tiny">Daily cap: 2 stars · Time‑away: 8 min · Cooldown: 30 min.</div>
+        </div>
+        <div class="half">
+          <div class="pill">“Done” Button</div>
+          <div class="inline-tip">Generate a bookmarklet for explicit completion.</div>
+          <div class="small-row">
+            <button class="btn" data-make-done="pq">Generate for Pre‑P1</button>
+            <button class="btn alt" data-copy-url>Copy Monday URL</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">🗓️ About this page</div>
+      <ul class="note" style="margin:0 0 0 18px;">
+        <li>Granular links go straight into activities/games for less friction.</li>
+        <li>Stars award when you return after ≥ 8 minutes away or when tapping the “Done” bookmark.</li>
+        <li>Tip: In Silk, Add to Home Screen and place near learning apps.</li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      Sources: 
+      <a class="pill" href="https://www.bbc.co.uk/bitesize/articles/zf4sscw" target="_blank" rel="noopener noreferrer">Karate Cats — Maths (BBC)</a>
+      <a class="pill" href="https://www.bbc.co.uk/bitesize/articles/zvfcp9q" target="_blank" rel="noopener noreferrer">Space Shoppers — Money (BBC)</a>
