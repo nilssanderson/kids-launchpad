@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kids Learning Launchpad — Monday</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; padding: 16px; background: #fafafa; color: #222; }
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .stat { font-size: 18px; margin-right: 12px; }
+    #tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 8px; }
+    .tile { display: block; text-decoration: none; background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); color: #111; border: 2px solid transparent; }
+    .tile:active { transform: scale(0.99); }
+    .tile:hover { border-color: #e0e7ff; }
+    .tile h3 { margin: 0 0 6px; font-size: 18px; }
+    .tile p { margin: 0; color: #555; font-size: 14px; }
+    .controls { display: flex; gap: 10px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+    button { background: #2563eb; color: white; border: 0; border-radius: 8px; padding: 10px 14px; font-size: 14px; }
+    button.secondary { background: #6b7280; }
+    select { padding: 8px 10px; font-size: 14px; border-radius: 8px; border: 1px solid #d1d5db; }
+    .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .stars { font-size: 22px; letter-spacing: 2px; }
+    .note { font-size: 12px; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <strong>Monday</strong>
+      <span id="status" class="note">Online</span>
+    </div>
+    <div class="row">
+      <div class="stat">Stars: <span id="stars" class="stars">—</span></div>
+      <div class="stat" id="streak">Streak: —</div>
+      <select id="childSelect" aria-label="Choose Child">
+        <option value="p2" selected>P2 (5–6y)</option>
+        <option value="pq">Pre-P1 (4–5y)</option>
+      </select>
+    </div>
+  </header>
+
+  <div id="tiles"></div>
+
+  <div class="controls">
+    <button onclick="awardDone('manual')">Give Star (Manual Test)</button>
+    <button class="secondary" onclick="refreshTotals()">Refresh Totals</button>
+  </div>
+
+  <p class="note">Tip: Open a tile, play for 4+ minutes, then come back to this tab to auto-award a star. Or use “Give Star”.</p>
+
+  <script>
+    // ====== API wiring (Apps Script Web App) ======
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzPKHd-eJ80mu7L2TYel3j6pN-WEyflrj9S2GHCzmBJ2cbuUSBnTyJwYvh3AaPm9zUs/exec';
+    const API_TOKEN = 'b4e7b3f6f0c24b0f8b3df4a2a0c7e9d1a6c3e2f9b7d48a0c5f1e4a7c9b2d6f0'; // Primary token you asked for
+
+    // ====== Child selection ======
+    const childSelectEl = document.getElementById('childSelect');
+    function activeChildId(){ return childSelectEl.value; }
+
+    // ====== Monday tiles (direct activity links we gathered) ======
+    // You can manage these via config later; for MVP we inline them.
+    const MONDAY_TILES = {
+      p2: [
+        {
+          id: 'karate_cats_maths',
+          label: 'Karate Cats: Maths',
+          emoji: '🥋',
+          url: 'https://www.bbc.co.uk/bitesize/topics/zjkphbk/articles/zf4sscw',
+          blurb: 'Number, addition and subtraction practice.'
+        },
+        {
+          id: 'space_shoppers',
+          label: 'Space Shoppers: Money Funfair',
+          emoji: '🎟️',
+          url: 'https://www.bbc.co.uk/bitesize/topics/zp8hvcw/articles/zvspwty',
+          blurb: 'Coins and money skills.'
+        },
+        {
+          id: 'buds_number_garden',
+          label: 'Bud’s Number Garden',
+          emoji: '🌼',
+          url: 'https://www.bbc.co.uk/games/embed/bud?sport=full',
+          blurb: 'Counting and number order.'
+        }
+      ],
+      pq: [
+        {
+          id: 'buds_number_garden',
+          label: 'Bud’s Number Garden',
+          emoji: '🌼',
+          url: 'https://www.bbc.co.uk/games/embed/bud?sport=full',
+          blurb: 'Gentle counting practice.'
+        },
+        {
+          id: 'space_shoppers',
+          label: 'Space Shoppers: Money Funfair',
+          emoji: '🎟️',
+          url: 'https://www.bbc.co.uk/bitesize/topics/zp8hvcw/articles/zvspwty',
+          blurb: 'Recognise coins, match values.'
+        },
+        {
+          id: 'karate_cats_maths',
+          label: 'Karate Cats: Maths',
+          emoji: '🥋',
+          url: 'https://www.bbc.co.uk/bitesize/topics/zjkphbk/articles/zf4sscw',
+          blurb: 'Short challenges with medals.'
+        }
+      ]
+    };
+
+    // ====== Device ID ======
+    function deviceId(){
+      let id = localStorage.getItem('device_id');
+      if(!id){
+        id = (crypto.randomUUID?.() || Math.random().toString(36).slice(2)) + '-fire';
+        localStorage.setItem('device_id', id);
+      }
+      return id;
+    }
+
+    // ====== API helpers ======
+    async function apiGet(params){
+      const q = new URLSearchParams({...params, token: API_TOKEN});
+      try {
+        const res = await fetch(`${API_URL}?${q.toString()}`);
+        return await res.json();
+      } catch (e){
+        setStatus('Offline', true);
+        return {error:'network'};
+      }
+    }
+
+    async function apiPost(path, body){
+      try {
+        const res = await fetch(`${API_URL}?path=${encodeURIComponent(path)}`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({...body, token: API_TOKEN})
+        });
+        const json = await res.json();
+        return json;
+      } catch (e){
+        setStatus('Offline', true);
+        return {error:'network'};
+      }
+    }
+
+    // ====== UI helpers ======
+    function setStatus(text, isError=false){
+      const el = document.getElementById('status');
+      el.textContent = text;
+      el.style.color = isError ? '#b91c1c' : '#6b7280';
+    }
+
+    function renderStars(stars, streak){
+      const el = document.getElementById('stars');
+      const st = document.getElementById('streak');
+      el.textContent = stars > 0 ? '⭐'.repeat(Math.min(stars, 20)) : '—';
+      st.textContent = `Streak: ${streak || 0} days`;
+    }
+
+    // ====== Totals (server authority) ======
+    async function refreshTotals(){
+      const data = await apiGet({ path:'totals/get', child_id: activeChildId(), date: new Date().toISOString().slice(0,10) });
+      if (data && !data.error){
+        renderStars(Number(data.stars||0), Number(data.streak_days||0));
+        setStatus('Online');
+      }
+    }
+
+    // ====== Tiles ======
+    function hydrateTiles(){
+      const tiles = MONDAY_TILES[activeChildId()] || [];
+      const container = document.getElementById('tiles');
+      container.innerHTML = '';
+      tiles.forEach(t=>{
+        const a = document.createElement('a');
+        a.href = t.url;
+        a.className = 'tile';
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.innerHTML = `
+          <h3>${t.emoji || ''} ${t.label}</h3>
+          <p>${t.blurb || ''}</p>
+        `;
+        a.addEventListener('click', ()=> recordLaunch(t.id));
+        container.appendChild(a);
+      });
+    }
+
+    // ====== Event logging (MVP: Create events + auto-award on return) ======
+    let lastLaunch = null;
+
+    function recordLaunch(tileId){
+      // Mark start time to compute duration; we can optionally post a non-award launch later.
+      lastLaunch = { tileId, start: new Date().toISOString() };
+    }
+
+    async function awardDone(method='done'){
+      if (!lastLaunch) return;
+      const ev = {
+        device_id: deviceId(),
+        child_id: activeChildId(),
+        tile_id: lastLaunch.tileId,
+        page: 'monday',
+        action: 'done_award', // counted in totals
+        start_ts: lastLaunch.start,
+        end_ts: new Date().toISOString(),
+        duration_s: Math.max(0, Math.floor((Date.now() - Date.parse(lastLaunch.start))/1000)),
+        method,
+        client_version: 'mon-1.0.0'
+      };
+      await apiPost('events/create', ev);
+      lastLaunch = null;
+      await refreshTotals();
+    }
+
+    document.addEventListener('visibilitychange', ()=>{
+      if (document.visibilityState === 'visible' && lastLaunch){
+        const awayMs = Date.now() - Date.parse(lastLaunch.start);
+        if (awayMs > 4*60*1000){ // 4 minutes heuristic
+          awardDone('time_away');
+        }
+      }
+    });
+
+    // ====== Init ======
+    window.addEventListener('load', async ()=>{
+      hydrateTiles();
+      await refreshTotals();
+    });
+
+    childSelectEl.addEventListener('change', async ()=>{
+      hydrateTiles();
+      await refreshTotals();
+    });
+  </script>
+</body>
+</html>
