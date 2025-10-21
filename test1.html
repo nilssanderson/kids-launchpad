@@ -120,30 +120,30 @@
     }
 
     // ====== API helpers ======
+    // GET is fine as-is (no preflight)
     async function apiGet(params){
       const q = new URLSearchParams({...params, token: API_TOKEN});
-      try {
-        const res = await fetch(`${API_URL}?${q.toString()}`);
-        return await res.json();
-      } catch (e){
-        setStatus('Offline', true);
-        return {error:'network'};
-      }
+      const res = await fetch(`${API_URL}?${q.toString()}`); // no custom headers
+      return res.json();
     }
-
+    
+    // POST: make it a simple request (no preflight)
     async function apiPost(path, body){
-      try {
-        const res = await fetch(`${API_URL}?path=${encodeURIComponent(path)}`, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({...body, token: API_TOKEN})
-        });
-        const json = await res.json();
-        return json;
-      } catch (e){
-        setStatus('Offline', true);
-        return {error:'network'};
-      }
+      // Move token to query string to avoid needing JSON parse for auth
+      const url = `${API_URL}?path=${encodeURIComponent(path)}&token=${encodeURIComponent(API_TOKEN)}`;
+    
+      // Content-Type text/plain prevents preflight; body is still JSON string
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // simple request
+        body: JSON.stringify(body)
+      });
+    
+      // If your deployment is older and returns opaque on some setups, guard here
+      let json;
+      try { json = await res.json(); }
+      catch { json = { ok: res.ok }; }
+      return json;
     }
 
     // ====== UI helpers ======
