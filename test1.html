@@ -27,7 +27,7 @@
   <header>
     <div class="row">
       <strong>Monday</strong>
-      <span id="status" class="note">Online</span>
+      <span id="status" class="note">Online?</span>
     </div>
     <div class="row">
       <div class="stat">Stars: <span id="stars" class="stars">—</span></div>
@@ -44,22 +44,21 @@
   <div class="controls">
     <button onclick="awardDone('manual')">Give Star (Manual Test)</button>
     <button class="secondary" onclick="refreshTotals()">Refresh Totals</button>
+    <button class="secondary" onclick="healthCheck()">Health Check</button>
   </div>
 
-  <p class="note">Tip: Open a tile, play for 4+ minutes, then come back to this tab to auto-award a star. Or use “Give Star”.</p>
+  <p class="note">Tip: Open a tile, play for 4+ minutes, then return to this tab to auto-award a star. Or use “Give Star”.</p>
 
   <script>
-    // ====== API wiring (Apps Script Web App) ======
-    const DEPLOYMENT_KEY = 'AKfycbxbY-QOLnByjaoSVaSJ0ASPSh2T0IQCMIuZcP08V51Kp3EoIT_KWf-r5zf4ljOW8PU9sA'
-    const API_URL = `https://script.google.com/macros/s/${DEPLOYMENT_KEY}/exec`;
-    const API_TOKEN = 'b4e7b3f6f0c24b0f8b3df4a2a0c7e9d1a6c3e2f9b7d48a0c5f1e4a7c9b2d6f0'; // Primary token you asked for
+    // ====== Your Apps Script Web App URL and token ======
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxbY-QOLnByjaoSVaSJ0ASPSh2T0IQCMIuZcP08V51Kp3EoIT_KWf-r5zf4ljOW8PU9sA/exec';
+    const API_TOKEN = 'b4e7b3f6f0c24b0f8b3df4a2a0c7e9d1a6c3e2f9b7d48a0c5f1e4a7c9b2d6f0'; // Must match Script Properties: API_TOKEN
 
     // ====== Child selection ======
     const childSelectEl = document.getElementById('childSelect');
     function activeChildId(){ return childSelectEl.value; }
 
-    // ====== Monday tiles (direct activity links we gathered) ======
-    // You can manage these via config later; for MVP we inline them.
+    // ====== Monday tiles (direct activity links) ======
     const MONDAY_TILES = {
       p2: [
         {
@@ -119,34 +118,7 @@
       return id;
     }
 
-    // ====== API helpers ======
-    // GET is fine as-is (no preflight)
-    async function apiGet(params){
-      const q = new URLSearchParams({...params, token: API_TOKEN});
-      const res = await fetch(`${API_URL}?${q.toString()}`); // no custom headers
-      return res.json();
-    }
-    
-    // POST: make it a simple request (no preflight)
-    async function apiPost(path, body){
-      // Move token to query string to avoid needing JSON parse for auth
-      const url = `${API_URL}?path=${encodeURIComponent(path)}&token=${encodeURIComponent(API_TOKEN)}`;
-    
-      // Content-Type text/plain prevents preflight; body is still JSON string
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // simple request
-        body: JSON.stringify(body)
-      });
-    
-      // If your deployment is older and returns opaque on some setups, guard here
-      let json;
-      try { json = await res.json(); }
-      catch { json = { ok: res.ok }; }
-      return json;
-    }
-
-    // ====== UI helpers ======
+    // ====== Status/Stars UI ======
     function setStatus(text, isError=false){
       const el = document.getElementById('status');
       el.textContent = text;
@@ -160,12 +132,60 @@
       st.textContent = `Streak: ${streak || 0} days`;
     }
 
+    // ====== CORS-safe API helpers ======
+    async function apiGet(params){
+      const q = new URLSearchParams({...params, token: API_TOKEN});
+      try {
+        const res = await fetch(`${API_URL}?${q.toString()}`); // no custom headers => simple GET
+        const json = await res.json();
+        return json;
+      } catch (e){
+        setStatus('Offline', true);
+        return {error:'network'};
+      }
+    }
+
+    async function apiPost(path, body){
+      // Put token in query; send body as text/plain to avoid preflight
+      const url = `${API_URL}?path=${encodeURIComponent(path)}&token=${encodeURIComponent(API_TOKEN)}`;
+      try {
+        const res = await fetch(url, {
+          method:'POST',
+          headers:{ 'Content-Type':'text/plain;charset=utf-8' }, // simple request => no preflight
+          body: JSON.stringify(body)
+        });
+        let json;
+        try { json = await res.json(); }
+        catch { json = { ok: res.ok }; }
+        return json;
+      } catch (e){
+        setStatus('Offline', true);
+        return {error:'network'};
+      }
+    }
+
+    // ====== Health check ======
+    async function healthCheck(){
+      const data = await apiGet({ path:'health' });
+      if (data && data.ok){
+        setStatus('Online');
+        alert('Health OK: ' + data.now);
+      } else {
+        setStatus('Unauthorized?', true);
+        alert('Health failed. If you see {"error":"unauthorized"}, check Script Properties API_TOKEN and redeploy the web app.');
+      }
+    }
+
     // ====== Totals (server authority) ======
     async function refreshTotals(){
       const data = await apiGet({ path:'totals/get', child_id: activeChildId(), date: new Date().toISOString().slice(0,10) });
       if (data && !data.error){
         renderStars(Number(data.stars||0), Number(data.streak_days||0));
         setStatus('Online');
+      } else if (data && data.error === 'unauthorized'){
+        setStatus('Unauthorized', true);
+      } else {
+        setStatus('Offline', true);
       }
     }
 
@@ -180,20 +200,16 @@
         a.className = 'tile';
         a.target = '_blank';
         a.rel = 'noopener';
-        a.innerHTML = `
-          <h3>${t.emoji || ''} ${t.label}</h3>
-          <p>${t.blurb || ''}</p>
-        `;
+        a.innerHTML = `<h3>${t.emoji || ''} ${t.label}</h3><p>${t.blurb || ''}</p>`;
         a.addEventListener('click', ()=> recordLaunch(t.id));
         container.appendChild(a);
       });
     }
 
-    // ====== Event logging (MVP: Create events + auto-award on return) ======
+    // ====== Event logging / award ======
     let lastLaunch = null;
 
     function recordLaunch(tileId){
-      // Mark start time to compute duration; we can optionally post a non-award launch later.
       lastLaunch = { tileId, start: new Date().toISOString() };
     }
 
@@ -204,22 +220,30 @@
         child_id: activeChildId(),
         tile_id: lastLaunch.tileId,
         page: 'monday',
-        action: 'done_award', // counted in totals
+        action: 'done_award',
         start_ts: lastLaunch.start,
         end_ts: new Date().toISOString(),
         duration_s: Math.max(0, Math.floor((Date.now() - Date.parse(lastLaunch.start))/1000)),
         method,
         client_version: 'mon-1.0.0'
       };
-      await apiPost('events/create', ev);
-      lastLaunch = null;
-      await refreshTotals();
+      const res = await apiPost('events/create', ev);
+      if (res && res.ok){
+        lastLaunch = null;
+        await refreshTotals();
+      } else if (res && res.error === 'unauthorized'){
+        setStatus('Unauthorized', true);
+        alert('Unauthorized: Ensure your Apps Script Script Properties has API_TOKEN set to this same token, and redeploy the Web App.');
+      } else {
+        setStatus('Offline', true);
+        alert('Network or server error while posting event.');
+      }
     }
 
     document.addEventListener('visibilitychange', ()=>{
       if (document.visibilityState === 'visible' && lastLaunch){
         const awayMs = Date.now() - Date.parse(lastLaunch.start);
-        if (awayMs > 4*60*1000){ // 4 minutes heuristic
+        if (awayMs > 4*60*1000){
           awardDone('time_away');
         }
       }
